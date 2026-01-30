@@ -4,16 +4,18 @@ import { loadState, saveState, type PollerState } from "./state.js";
 
 const STATE_PATH = "data/poller-state.json";
 
-interface NewItem {
+export interface NewItem {
   id: string;
   type: string | null;
   title: string | null;
   year: number | null;
   addedAt: number | null;
   // Episode-specific
-  grandparentTitle: string | null; // show name
-  parentIndex: number | null;      // season number
-  index: number | null;            // episode number
+  grandparentTitle: string | null;    // show name
+  grandparentRatingKey: string | null; // show ID
+  parentRatingKey: string | null;      // season ID
+  parentIndex: number | null;          // season number
+  index: number | null;                // episode number
 }
 
 function normalizeItem(node: any): NewItem {
@@ -24,23 +26,42 @@ function normalizeItem(node: any): NewItem {
     year: attr(node, "year"),
     addedAt: attr(node, "addedAt"),
     grandparentTitle: attr(node, "grandparentTitle"),
+    grandparentRatingKey: attr(node, "grandparentRatingKey") != null ? String(attr(node, "grandparentRatingKey")) : null,
+    parentRatingKey: attr(node, "parentRatingKey") != null ? String(attr(node, "parentRatingKey")) : null,
     parentIndex: attr(node, "parentIndex"),
     index: attr(node, "index"),
   };
 }
 
-export function formatItem(item: NewItem): string {
+export type AnnouncementType = "new_show" | "new_season" | "new";
+
+export interface Announcement {
+  type: AnnouncementType;
+  item: NewItem;
+  message: string;
+}
+
+function formatEpisode(item: NewItem): string {
+  return `${item.grandparentTitle} — S${String(item.parentIndex ?? 0).padStart(2, "0")}E${String(item.index ?? 0).padStart(2, "0")} "${item.title}"`;
+}
+
+export function formatItem(announcementType: AnnouncementType, item: NewItem): string {
   switch (item.type) {
-    case "episode":
-      return `${item.grandparentTitle} — S${String(item.parentIndex ?? 0).padStart(2, "0")}E${String(item.index ?? 0).padStart(2, "0")} "${item.title}"`;
+    case "episode": {
+      const label =
+        announcementType === "new_show" ? "New Show" :
+        announcementType === "new_season" ? "New Season" :
+        "New";
+      return `${label}: ${formatEpisode(item)}`;
+    }
     case "movie":
-      return `${item.title} (${item.year ?? "unknown year"})`;
+      return `New: ${item.title} (${item.year ?? "unknown year"})`;
     case "season":
-      return `${item.grandparentTitle ?? item.title} — Season ${item.index ?? "?"}`;
+      return `New: ${item.grandparentTitle ?? item.title} — Season ${item.index ?? "?"}`;
     case "show":
-      return `${item.title} (${item.year ?? "unknown year"})`;
+      return `New: ${item.title} (${item.year ?? "unknown year"})`;
     default:
-      return `${item.title} (${item.type ?? "unknown"})`;
+      return `New: ${item.title} (${item.type ?? "unknown"})`;
   }
 }
 
@@ -102,7 +123,22 @@ export function startPoller(
       console.log("[poller] No new items found.");
     } else {
       for (const item of newItems) {
-        console.log(`[poller] New: ${formatItem(item)}`);
+        let announcementType: AnnouncementType = "new";
+
+        if (item.type === "episode" && item.index === 1) {
+          const showId = item.grandparentRatingKey;
+          const seasonId = item.parentRatingKey;
+
+          if (item.parentIndex === 1 && showId && !state.announcedShowIds.includes(showId)) {
+            announcementType = "new_show";
+            state.announcedShowIds.push(showId);
+          } else if (seasonId && !state.announcedSeasonIds.includes(seasonId)) {
+            announcementType = "new_season";
+            state.announcedSeasonIds.push(seasonId);
+          }
+        }
+
+        console.log(`[poller] ${formatItem(announcementType, item)}`);
         state.announcedIds.push(item.id);
       }
     }
