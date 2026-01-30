@@ -7,10 +7,17 @@ import { expressMiddleware } from "@apollo/server/express4";
 import { typeDefs } from "./schema/typeDefs.js";
 import { resolvers } from "./schema/resolvers.js";
 import { PlexClient } from "./plex/client.js";
+import { startPoller } from "./poller/poller.js";
 
 const PORT = Number(process.env.PORT ?? 4000);
 const baseUrl = process.env.PLEX_BASE_URL ?? "http://localhost:32400";
 const token = process.env.PLEX_TOKEN ?? "";
+const pollLibraryIds = (process.env.PLEX_POLL_LIBRARY_IDS ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+const pollIntervalMinutes = Number(process.env.POLL_INTERVAL_MINUTES ?? 15);
+const pollMaxAnnouncedIds = Number(process.env.POLL_MAX_ANNOUNCED_IDS ?? 50);
 
 if (!token) {
   console.error("Missing PLEX_TOKEN");
@@ -38,6 +45,15 @@ async function main() {
 
   app.listen(PORT, () => {
     console.log(`Server listening on http://localhost:${PORT}`);
+
+    if (pollLibraryIds.length > 0) {
+      startPoller(plex, baseUrl, pollLibraryIds, {
+        intervalMinutes: pollIntervalMinutes,
+        maxAnnouncedIds: pollMaxAnnouncedIds,
+      });
+    } else {
+      console.log("No PLEX_POLL_LIBRARY_IDS configured — poller disabled");
+    }
   });
 }
 
