@@ -10,6 +10,10 @@ interface NewItem {
   title: string | null;
   year: number | null;
   addedAt: number | null;
+  // Episode-specific
+  grandparentTitle: string | null; // show name
+  parentIndex: number | null;      // season number
+  index: number | null;            // episode number
 }
 
 function normalizeItem(node: any): NewItem {
@@ -19,7 +23,25 @@ function normalizeItem(node: any): NewItem {
     title: attr(node, "title"),
     year: attr(node, "year"),
     addedAt: attr(node, "addedAt"),
+    grandparentTitle: attr(node, "grandparentTitle"),
+    parentIndex: attr(node, "parentIndex"),
+    index: attr(node, "index"),
   };
+}
+
+export function formatItem(item: NewItem): string {
+  switch (item.type) {
+    case "episode":
+      return `${item.grandparentTitle} — S${String(item.parentIndex ?? 0).padStart(2, "0")}E${String(item.index ?? 0).padStart(2, "0")} "${item.title}"`;
+    case "movie":
+      return `${item.title} (${item.year ?? "unknown year"})`;
+    case "season":
+      return `${item.grandparentTitle ?? item.title} — Season ${item.index ?? "?"}`;
+    case "show":
+      return `${item.title} (${item.year ?? "unknown year"})`;
+    default:
+      return `${item.title} (${item.type ?? "unknown"})`;
+  }
 }
 
 async function poll(
@@ -80,7 +102,7 @@ export function startPoller(
       console.log("[poller] No new items found.");
     } else {
       for (const item of newItems) {
-        console.log(`[poller] New: ${item.title} (${item.type}, ${item.year ?? "unknown year"})`);
+        console.log(`[poller] New: ${formatItem(item)}`);
         state.announcedIds.push(item.id);
       }
     }
