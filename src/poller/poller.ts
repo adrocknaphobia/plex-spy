@@ -2,6 +2,7 @@ import { PlexClient } from "../plex/client.js";
 import { asArray, attr } from "../plex/normalize.js";
 import { loadState, saveState, type PollerState } from "./state.js";
 import { sendSlackNotification } from "../slack/notify.js";
+import { TmdbClient } from "../tmdb/client.js";
 
 const STATE_PATH = "data/poller-state.json";
 
@@ -11,6 +12,7 @@ export interface NewItem {
   title: string | null;
   year: number | null;
   addedAt: number | null;
+  thumb: string | null;
   // Episode-specific
   grandparentTitle: string | null;    // show name
   grandparentRatingKey: string | null; // show ID
@@ -26,6 +28,7 @@ function normalizeItem(node: any): NewItem {
     title: attr(node, "title"),
     year: attr(node, "year"),
     addedAt: attr(node, "addedAt"),
+    thumb: attr(node, "thumb"),
     grandparentTitle: attr(node, "grandparentTitle"),
     grandparentRatingKey: attr(node, "grandparentRatingKey") != null ? String(attr(node, "grandparentRatingKey")) : null,
     parentRatingKey: attr(node, "parentRatingKey") != null ? String(attr(node, "parentRatingKey")) : null,
@@ -40,6 +43,8 @@ export interface Announcement {
   type: AnnouncementType;
   item: NewItem;
   message: string;
+  imageUrl?: string;
+  overview?: string;
 }
 
 function formatEpisode(item: NewItem): string {
@@ -105,6 +110,63 @@ export interface PollerOptions {
   intervalMinutes?: number;
   maxAnnouncedIds?: number;
   slackWebhookUrl?: string;
+  tmdbApiKey?: string;
+}
+
+async function lookupTmdb(
+  tmdb: TmdbClient,
+  item: NewItem
+): Promise<{ imageUrl?: string; overview?: string }> {
+  try {
+    switch (item.type) {
+      case "movie": {
+        const result = await tmdb.searchMovie(item.title ?? "", item.year ?? undefined);
+        return {
+          imageUrl: result?.imageUrl ?? undefined,
+          overview: result?.overview ?? undefined,
+        };
+      }
+      case "show": {
+        const result = await tmdb.searchTv(item.title ?? "");
+        return {
+          imageUrl: result?.imageUrl ?? undefined,
+          overview: result?.overview ?? undefined,
+        };
+      }
+      case "season": {
+        const showTitle = item.grandparentTitle ?? item.title ?? "";
+        const result = await tmdb.searchTv(showTitle);
+        return {
+          imageUrl: result?.imageUrl ?? undefined,
+          overview: result?.overview ?? undefined,
+        };
+      }
+      case "episode": {
+        const showTitle = item.grandparentTitle ?? "";
+        const showResult = await tmdb.searchTv(showTitle);
+        if (!showResult) return {};
+
+        const seasonNum = item.parentIndex ?? 0;
+        const episodeNum = item.index ?? 0;
+        if (seasonNum > 0 && episodeNum > 0) {
+          const epResult = await tmdb.getEpisode(showResult.id, seasonNum, episodeNum);
+          return {
+            imageUrl: epResult?.imageUrl ?? showResult.imageUrl ?? undefined,
+            overview: epResult?.overview ?? undefined,
+          };
+        }
+        return {
+          imageUrl: showResult.imageUrl ?? undefined,
+          overview: showResult.overview ?? undefined,
+        };
+      }
+      default:
+        return {};
+    }
+  } catch (err) {
+    console.error("[poller] TMDB lookup failed:", err);
+    return {};
+  }
 }
 
 export function startPoller(
@@ -116,6 +178,7 @@ export function startPoller(
   const intervalMinutes = options.intervalMinutes ?? 15;
   const maxAnnouncedIds = options.maxAnnouncedIds ?? 50;
   const slackWebhookUrl = options.slackWebhookUrl;
+  const tmdb = options.tmdbApiKey ? new TmdbClient(options.tmdbApiKey) : null;
 
   async function tick() {
     console.log("[poller] Checking for new media...");
@@ -146,6 +209,13 @@ export function startPoller(
 
         if (slackWebhookUrl) {
           const announcement: Announcement = { type: announcementType, item, message };
+
+          if (tmdb) {
+            const tmdbData = await lookupTmdb(tmdb, item);
+            announcement.imageUrl = tmdbData.imageUrl;
+            announcement.overview = tmdbData.overview;
+          }
+
           await sendSlackNotification(slackWebhookUrl, announcement);
         }
 
