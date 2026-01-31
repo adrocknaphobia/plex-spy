@@ -23,9 +23,11 @@ export const typeDefs = /* GraphQL */ `
 
   interface MediaItem {
     id: ID!
+    type: String!
     title: String!
     year: Int
     summary: String
+    addedAt: Int
     thumb: String
     art: String
     viewCount: Int
@@ -33,9 +35,11 @@ export const typeDefs = /* GraphQL */ `
 
   type Movie implements MediaItem {
     id: ID!
+    type: String!
     title: String!
     year: Int
     summary: String
+    addedAt: Int
     thumb: String
     art: String
     viewCount: Int
@@ -45,9 +49,11 @@ export const typeDefs = /* GraphQL */ `
 
   type Show implements MediaItem {
     id: ID!
+    type: String!
     title: String!
     year: Int
     summary: String
+    addedAt: Int
     thumb: String
     art: String
     viewCount: Int
@@ -56,9 +62,11 @@ export const typeDefs = /* GraphQL */ `
 
   type Season implements MediaItem {
     id: ID!
+    type: String!
     title: String!
     year: Int
     summary: String
+    addedAt: Int
     thumb: String
     art: String
     viewCount: Int
@@ -67,9 +75,11 @@ export const typeDefs = /* GraphQL */ `
 
   type Episode implements MediaItem {
     id: ID!
+    type: String!
     title: String!
     year: Int
     summary: String
+    addedAt: Int
     thumb: String
     art: String
     viewCount: Int
