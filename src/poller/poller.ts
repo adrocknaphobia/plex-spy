@@ -1,6 +1,7 @@
 import { PlexClient } from "../plex/client.js";
 import { asArray, attr } from "../plex/normalize.js";
 import { loadState, saveState, type PollerState } from "./state.js";
+import { sendSlackNotification } from "../slack/notify.js";
 
 const STATE_PATH = "data/poller-state.json";
 
@@ -103,6 +104,7 @@ async function poll(
 export interface PollerOptions {
   intervalMinutes?: number;
   maxAnnouncedIds?: number;
+  slackWebhookUrl?: string;
 }
 
 export function startPoller(
@@ -113,6 +115,7 @@ export function startPoller(
 ) {
   const intervalMinutes = options.intervalMinutes ?? 15;
   const maxAnnouncedIds = options.maxAnnouncedIds ?? 50;
+  const slackWebhookUrl = options.slackWebhookUrl;
 
   async function tick() {
     console.log("[poller] Checking for new media...");
@@ -138,7 +141,14 @@ export function startPoller(
           }
         }
 
-        console.log(`[poller] ${formatItem(announcementType, item)}`);
+        const message = formatItem(announcementType, item);
+        console.log(`[poller] ${message}`);
+
+        if (slackWebhookUrl) {
+          const announcement: Announcement = { type: announcementType, item, message };
+          await sendSlackNotification(slackWebhookUrl, announcement);
+        }
+
         state.announcedIds.push(item.id);
       }
     }

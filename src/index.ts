@@ -18,6 +18,7 @@ const pollLibraryIds = (process.env.PLEX_POLL_LIBRARY_IDS ?? "")
   .filter(Boolean);
 const pollIntervalMinutes = Number(process.env.POLL_INTERVAL_MINUTES ?? 15);
 const pollMaxAnnouncedIds = Number(process.env.POLL_MAX_ANNOUNCED_IDS ?? 50);
+const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL ?? "";
 
 if (!token) {
   console.error("Missing PLEX_TOKEN");
@@ -50,6 +51,7 @@ async function main() {
       startPoller(plex, baseUrl, pollLibraryIds, {
         intervalMinutes: pollIntervalMinutes,
         maxAnnouncedIds: pollMaxAnnouncedIds,
+        slackWebhookUrl: slackWebhookUrl || undefined,
       });
     } else {
       console.log("No PLEX_POLL_LIBRARY_IDS configured — poller disabled");
