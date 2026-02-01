@@ -181,7 +181,14 @@ export function startPoller(
   const tmdb = options.tmdbApiKey ? new TmdbClient(options.tmdbApiKey) : null;
 
   async function tick() {
-    console.log("[poller] Checking for new media...");
+    const now = new Date();
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const dd = String(now.getDate()).padStart(2, "0");
+    const yy = String(now.getFullYear()).slice(-2);
+    const hh = String(now.getHours()).padStart(2, "0");
+    const min = String(now.getMinutes()).padStart(2, "0");
+    const timestamp = `${mm}/${dd}/${yy} ${hh}:${min}`;
+    console.log(`[poller][${timestamp}] Checking for new media...`);
     const state = await loadState(STATE_PATH);
     const newItems = await poll(plex, libraryIds, state);
 
