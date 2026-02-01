@@ -1,4 +1,3 @@
-import { url } from "inspector";
 import { asArray, attr } from "../plex/normalize.js";
 
 function asset(baseUrl: string, path: string | null) {
@@ -82,19 +81,7 @@ export const resolvers = {
     },
 
     episodes: async (_: any, args: any, ctx: any) => {
-      const plexurl = `/library/metadata/${args.seasonId}/children`;
       const data = await ctx.plex.get(`/library/metadata/${args.seasonId}/children`);
-
-      const mc = data?.MediaContainer;
-      console.log("EPISODES DEBUG", {
-        seasonId: args.seasonId,
-        returnedVideos: Array.isArray(mc?.Video) ? mc.Video.length : (mc?.Video ? 1 : 0),
-        returnedDirectories: Array.isArray(mc?.Directory) ? mc.Directory.length : (mc?.Directory ? 1 : 0),
-        offset: mc?.["@_offset"],
-        size: mc?.["@_size"],
-        totalSize: mc?.["@_totalSize"],
-        plexurl
-      });
 
       return asArray(data?.MediaContainer?.Video).map((v: any) => ({
         ...normalize(v, ctx.baseUrl),

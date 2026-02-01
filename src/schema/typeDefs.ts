@@ -8,6 +8,7 @@ export const typeDefs = /* GraphQL */ `
     episodes(seasonId: ID!): [Episode!]!
     media(id: ID!): MediaItem
     search(query: String!): [MediaItem!]!
+    latest(libraryId: ID!, first: Int = 20): [MediaItem!]!
   }
 
   type Health {
@@ -88,12 +89,5 @@ export const typeDefs = /* GraphQL */ `
     duration: Int
   }
 
-  type Query {
-    latest
-    (
-      libraryId: ID!
-      first: Int = 20
-    ): [MediaItem!]!
-  }
 
 `;
