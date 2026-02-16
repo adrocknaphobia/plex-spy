@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A GraphQL API server that wraps the Plex Media Server REST API using Express + Apollo Server 4. Plex returns XML; this project parses it with `fast-xml-parser` and normalizes it into GraphQL types. Includes a polling service that monitors Plex libraries for new media and sends Slack notifications enriched with TMDB metadata.
+A GraphQL API server that wraps the Plex Media Server REST API using Express + Apollo Server 5. Plex returns XML; this project parses it with `fast-xml-parser` and normalizes it into GraphQL types. Includes a polling service that monitors Plex libraries for new media and sends Slack notifications enriched with TMDB metadata.
 
 ## Commands
 
@@ -65,4 +65,5 @@ src/
 
 - ES Modules throughout (`"type": "module"` in package.json)
 - Imports use `.js` extensions (NodeNext module resolution)
-- Strict mode enabled, target ES2022
+- Strict mode enabled, target ES2023
+- Requires Node.js 20+

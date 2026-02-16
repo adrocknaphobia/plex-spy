@@ -83,6 +83,7 @@ src/
 
 ## Tech Stack
 
-- **Express** + **Apollo Server 4** — HTTP and GraphQL
+- **Express** + **Apollo Server 5** — HTTP and GraphQL
 - **fast-xml-parser** — Plex XML response parsing
 - **TypeScript** — ES Modules with strict mode
+- **Node.js 20+** required
