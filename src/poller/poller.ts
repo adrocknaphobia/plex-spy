@@ -198,6 +198,8 @@ export function startPoller(
     if (newItems.length === 0) {
       console.log("[poller] No new items found.");
     } else {
+      const suppressedSeasonIds = new Set<string>();
+
       for (const item of newItems) {
         let announcementType: AnnouncementType = "new";
 
@@ -212,6 +214,16 @@ export function startPoller(
             announcementType = "new_season";
             state.announcedSeasonIds.push(seasonId);
           }
+        }
+
+        if (announcementType === "new_show" || announcementType === "new_season") {
+          if (item.parentRatingKey) suppressedSeasonIds.add(item.parentRatingKey);
+        }
+
+        if (item.type === "episode" && item.parentRatingKey && suppressedSeasonIds.has(item.parentRatingKey) && announcementType === "new") {
+          console.log(`[poller] Suppressed (batch): ${formatItem(announcementType, item)}`);
+          state.announcedIds.push(item.id);
+          continue;
         }
 
         const message = formatItem(announcementType, item);
