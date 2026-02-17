@@ -18,6 +18,7 @@ const pollLibraryIds = (process.env.PLEX_POLL_LIBRARY_IDS ?? "")
   .filter(Boolean);
 const pollIntervalMinutes = Number(process.env.POLL_INTERVAL_MINUTES ?? 15);
 const pollMaxAnnouncedIds = Number(process.env.POLL_MAX_ANNOUNCED_IDS ?? 50);
+const pollFetchLimit = Number(process.env.POLL_FETCH_LIMIT ?? 50);
 const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL ?? "";
 const tmdbApiKey = process.env.TMDB_API_KEY ?? "";
 
@@ -52,6 +53,7 @@ async function main() {
       startPoller(plex, baseUrl, pollLibraryIds, {
         intervalMinutes: pollIntervalMinutes,
         maxAnnouncedIds: pollMaxAnnouncedIds,
+        fetchLimit: pollFetchLimit,
         slackWebhookUrl: slackWebhookUrl || undefined,
         tmdbApiKey: tmdbApiKey || undefined,
       });

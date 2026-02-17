@@ -19,6 +19,7 @@ Edit `.env` with your configuration:
 | `PLEX_POLL_LIBRARY_IDS` | No | Comma-separated library IDs to monitor (enables poller) |
 | `POLL_INTERVAL_MINUTES` | No | Polling interval (default: `15`) |
 | `POLL_MAX_ANNOUNCED_IDS` | No | Max tracked IDs in state (default: `50`) |
+| `POLL_FETCH_LIMIT` | No | Items to fetch per library per poll (default: `50`) |
 | `SLACK_WEBHOOK_URL` | No | Slack webhook for new media notifications |
 | `TMDB_API_KEY` | No | TMDB API key for poster images and plot summaries |
 

@@ -23,6 +23,7 @@ Requires a `.env` file (see `.env.example`):
 - `PLEX_POLL_LIBRARY_IDS` — Comma-separated library IDs to monitor (enables poller)
 - `POLL_INTERVAL_MINUTES` — Optional, defaults to `15`
 - `POLL_MAX_ANNOUNCED_IDS` — Optional, defaults to `50` (caps state array size)
+- `POLL_FETCH_LIMIT` — Optional, defaults to `50` (number of recently added items to fetch per library per poll)
 - `SLACK_WEBHOOK_URL` — Optional. Slack incoming webhook for notifications
 - `TMDB_API_KEY` — Optional. Enables poster images and plot summaries in Slack messages
 

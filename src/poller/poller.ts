@@ -74,13 +74,14 @@ export function formatItem(announcementType: AnnouncementType, item: NewItem): s
 async function poll(
   plex: PlexClient,
   libraryIds: string[],
-  state: PollerState
+  state: PollerState,
+  fetchLimit: number
 ): Promise<NewItem[]> {
   const newItems: NewItem[] = [];
 
   for (const libId of libraryIds) {
     const path = `/library/sections/${encodeURIComponent(libId)}/recentlyAdded`
-      + `?X-Plex-Container-Start=0&X-Plex-Container-Size=20`;
+      + `?X-Plex-Container-Start=0&X-Plex-Container-Size=${fetchLimit}`;
 
     let data: any;
     try {
@@ -109,6 +110,7 @@ async function poll(
 export interface PollerOptions {
   intervalMinutes?: number;
   maxAnnouncedIds?: number;
+  fetchLimit?: number;
   slackWebhookUrl?: string;
   tmdbApiKey?: string;
 }
@@ -177,6 +179,7 @@ export function startPoller(
 ) {
   const intervalMinutes = options.intervalMinutes ?? 15;
   const maxAnnouncedIds = options.maxAnnouncedIds ?? 50;
+  const fetchLimit = options.fetchLimit ?? 50;
   const slackWebhookUrl = options.slackWebhookUrl;
   const tmdb = options.tmdbApiKey ? new TmdbClient(options.tmdbApiKey) : null;
 
@@ -190,7 +193,7 @@ export function startPoller(
     const timestamp = `${mm}/${dd}/${yy} ${hh}:${min}`;
     console.log(`[poller][${timestamp}] Checking for new media...`);
     const state = await loadState(STATE_PATH);
-    const newItems = await poll(plex, libraryIds, state);
+    const newItems = await poll(plex, libraryIds, state, fetchLimit);
 
     if (newItems.length === 0) {
       console.log("[poller] No new items found.");
